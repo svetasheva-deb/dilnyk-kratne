@@ -1,92 +1,279 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uk">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quiz Application</title>
-    <style>
-        body { font-family: Arial, sans-serif; }
-        .input-field { margin: 10px 0; }
-        input[type="text"], input[type="number"], input[type="email"] {
-            width: 100%;
-            padding: 10px;
-            margin: 5px 0;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        input[type="checkbox"] { margin-right: 10px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Дільники та кратні — Математичний тренажер</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700&family=Nunito:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f5f0e8; --card: #ffffff; --accent: #3d5a3e; --accent2: #e07a5f;
+    --accent3: #f2cc8f; --text: #1a1a2e; --muted: #6b7280; --border: #d1cfc8;
+    --success: #2d6a4f; --success-bg: #d8f3dc; --error: #c1121f; --error-bg: #ffe3e3;
+    --shadow: 0 4px 20px rgba(0,0,0,0.08); --radius: 16px;
+  }
+  body {
+    font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--text);
+    min-height: 100vh; padding: 2rem 1rem;
+    background-image:
+      radial-gradient(circle at 20% 20%, rgba(61,90,62,0.06) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(224,122,95,0.06) 0%, transparent 50%);
+  }
+  .container { max-width: 780px; margin: 0 auto; }
+  header { text-align: center; margin-bottom: 2rem; }
+  header h1 { font-family: 'Unbounded', sans-serif; font-size: clamp(1.4rem,4vw,2rem); font-weight: 700; color: var(--accent); margin-bottom: 0.5rem; }
+  header p { font-size: 1rem; color: var(--muted); }
+  .score-panel { display: flex; gap: 0.8rem; justify-content: center; flex-wrap: wrap; margin-bottom: 1.5rem; }
+  .score-chip { background: var(--card); border: 1.5px solid var(--border); border-radius: 99px; padding: 0.45rem 1.1rem; font-size: 0.9rem; font-weight: 600; color: var(--text); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+  .score-chip span { color: var(--accent); font-weight: 700; }
+  .quiz-card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 2rem; margin-bottom: 1.5rem; border: 1.5px solid var(--border); animation: fadeUp 0.4s ease both; }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+  .quiz-type-badge { display:inline-block; font-size:0.7rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; padding:3px 10px; border-radius:99px; background:var(--accent3); color:#5a3e00; margin-bottom:1rem; }
+  .quiz-question { font-size:1.15rem; font-weight:600; line-height:1.5; margin-bottom:0.5rem; }
+  .quiz-number-display { font-family:'Unbounded',sans-serif; font-size:2.2rem; font-weight:700; color:var(--accent); margin:0.6rem 0 1.4rem; letter-spacing:-0.02em; }
+  .options-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:0.7rem; margin-bottom:1.4rem; }
+  .option-btn { padding:0.8rem 0.5rem; border:2px solid var(--border); border-radius:12px; background:var(--bg); font-family:'Nunito',sans-serif; font-size:1.05rem; font-weight:600; cursor:pointer; transition:all 0.18s ease; text-align:center; }
+  .option-btn:hover:not(:disabled) { border-color:var(--accent); background:#edf5ee; transform:translateY(-2px); }
+  .option-btn.correct { border-color:var(--success); background:var(--success-bg); color:var(--success); }
+  .option-btn.wrong   { border-color:var(--error);   background:var(--error-bg);   color:var(--error); }
+  .option-btn:disabled { cursor:default; }
+  .input-row { display:flex; gap:0.7rem; margin-bottom:1.2rem; flex-wrap:wrap; }
+  .input-number { flex:1; min-width:120px; padding:0.7rem 1rem; border:2px solid var(--border); border-radius:12px; font-size:1.05rem; font-family:'Nunito',sans-serif; background:var(--bg); outline:none; transition:border-color 0.18s; }
+  .input-number:focus { border-color:var(--accent); }
+  .feedback { padding:0.8rem 1rem; border-radius:10px; font-size:0.95rem; font-weight:600; display:none; margin-top:0.2rem; margin-bottom:0.8rem; }
+  .feedback.show { display:block; }
+  .feedback.ok  { background:var(--success-bg); color:var(--success); }
+  .feedback.err { background:var(--error-bg);   color:var(--error); }
+  .hint-text { font-size:0.85rem; color:var(--muted); margin-bottom:1rem; }
+  .nav-row { display:flex; gap:0.8rem; justify-content:flex-end; margin-top:1.2rem; }
+  .btn-nav { padding:0.65rem 1.4rem; border-radius:12px; border:2px solid var(--accent); font-size:0.95rem; font-family:'Nunito',sans-serif; font-weight:700; cursor:pointer; transition:all 0.18s; }
+  .btn-nav.primary   { background:var(--accent); color:#fff; }
+  .btn-nav.primary:hover:not(:disabled) { background:#2e4430; transform:translateY(-1px); }
+  .btn-nav.secondary { background:transparent; color:var(--accent); }
+  .btn-nav.secondary:hover:not(:disabled) { background:#edf5ee; }
+  .btn-nav:disabled { opacity:0.4; cursor:not-allowed; }
+  .multi-check-group { display:flex; flex-wrap:wrap; gap:0.6rem; margin-bottom:1.2rem; }
+  .cb-label { display:flex; align-items:center; gap:0.45rem; padding:0.55rem 0.9rem; border:2px solid var(--border); border-radius:10px; cursor:pointer; font-size:1rem; font-weight:600; background:var(--bg); transition:all 0.18s; user-select:none; }
+  .cb-label:hover  { border-color:var(--accent); background:#edf5ee; }
+  .cb-label.checked { border-color:var(--accent); background:#edf5ee; color:var(--accent); }
+  .cb-label.correct { border-color:var(--success); background:var(--success-bg); color:var(--success); }
+  .cb-label.wrong   { border-color:var(--error);   background:var(--error-bg);   color:var(--error); }
+  .cb-label.missed  { border-color:var(--success); background:var(--success-bg); color:var(--success); outline:3px dashed var(--success); outline-offset:2px; }
+  .cb-label input { display:none; }
+</style>
 </head>
 <body>
-    <h1>Quiz Application</h1>
-    <form id="quizForm">
-        <div class="input-field">
-            <label for="questionType">Select Question Type:</label>
-            <select id="questionType" name="questionType">
-                <option value="1">Type 1</option>
-                <option value="2">Type 2</option>
-                <option value="3">Type 3</option>
-                <option value="4">Type 4</option>
-                <option value="5">Type 5</option>
-                <option value="6">Type 6</option>
-            </select>
-        </div>
-        <div class="input-field" id="questionArea"></div>
-        <button type="submit">Submit</button>
-    </form>
-    <script>
-        document.getElementById('questionType').addEventListener('change', function() {
-            const questionArea = document.getElementById('questionArea');
-            questionArea.innerHTML = ''; // Clear previous question input
-            const type = this.value;
+<div class="container">
+  <header>
+    <h1>🔢 Дільники та кратні</h1>
+    <p>Математичний тренажер — безлімітний режим</p>
+  </header>
+  <div class="score-panel">
+    <div class="score-chip">Запитання №<span id="q-num">0</span></div>
+    <div class="score-chip">✅ <span id="score-right">0</span></div>
+    <div class="score-chip">❌ <span id="score-wrong">0</span></div>
+    <div class="score-chip">🎯 <span id="score-pct">—</span></div>
+  </div>
+  <div id="quiz-area"></div>
+</div>
+<script>
+var MAX_N = 70;
+var qNum = 0, scoreRight = 0, scoreWrong = 0, currentQ = null;
 
-            let inputField;
-            switch(type) {
-                case '1':
-                    inputField = document.createElement('input');
-                    inputField.type = 'text';
-                    inputField.placeholder = 'Type 1 Question';
-                    break;
-                case '2':
-                    inputField = document.createElement('input');
-                    inputField.type = 'number';
-                    inputField.placeholder = 'Type 2 Question';
-                    break;
-                case '3': // Fixed syntax error
-                    inputField = document.createElement('input');
-                    inputField.type = 'text';
-                    inputField.placeholder = 'Type 3 Question';
-                    break;
-                case '4':
-                    inputField = document.createElement('input');
-                    inputField.type = 'email';
-                    inputField.placeholder = 'Type 4 Question';
-                    break;
-                case '5':
-                    inputField = document.createElement('input');
-                    inputField.type = 'text';
-                    inputField.placeholder = 'Type 5 Question';
-                    inputField.required = true; // Proper input handling
-                    break;
-                case '6':
-                    inputField = document.createElement('input');
-                    inputField.type = 'text';
-                    inputField.placeholder = 'Type 6 Question';
-                    inputField.required = true; // Proper input handling
-                    break;
-                default:
-                    break;
-            }
-            if (inputField) {
-                inputField.classList.add('input-field');
-                questionArea.appendChild(inputField);
-            }
-        });
+function rng(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
 
-        document.getElementById('quizForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            alert('Form submitted successfully!');
-        });
-    </script>
+function getDivisors(n){
+  var d=[];
+  for(var i=1;i<=n;i++) if(n%i===0) d.push(i);
+  return d;
+}
+
+function shuffle(arr){
+  var a=arr.slice();
+  for(var i=a.length-1;i>0;i--){
+    var j=Math.floor(Math.random()*(i+1));
+    var t=a[i]; a[i]=a[j]; a[j]=t;
+  }
+  return a;
+}
+
+function updateUI(){
+  document.getElementById('q-num').textContent=qNum;
+  document.getElementById('score-right').textContent=scoreRight;
+  document.getElementById('score-wrong').textContent=scoreWrong;
+  var t=scoreRight+scoreWrong;
+  document.getElementById('score-pct').textContent=t>0?Math.round(scoreRight/t*100)+'%':'—';
+}
+
+function makeQ(){
+  var type=rng(1,6);
+  if(type===1){
+    var n=rng(12,MAX_N), divs=getDivisors(n);
+    var correct=divs[rng(1,divs.length-2)];
+    var wrongs=[];
+    while(wrongs.length<5){ var c=rng(2,n-1); if(n%c!==0&&wrongs.indexOf(c)===-1) wrongs.push(c); }
+    return {type:1,badge:'Тип 1 — один дільник',q:'Яке з поданих чисел є дільником числа',n:n,options:shuffle([correct].concat(wrongs.slice(0,5))),answer:[correct],multi:false};
+  }
+  if(type===2){
+    var n=rng(12,40), divs=getDivisors(n);
+    var wrongs=[];
+    while(wrongs.length<4){ var c=rng(2,n+10); if(n%c!==0&&wrongs.indexOf(c)===-1&&divs.indexOf(c)===-1) wrongs.push(c); }
+    return {type:2,badge:'Тип 2 — усі дільники',q:'Позначте всі дільники числа',n:n,options:shuffle(divs.concat(wrongs)),answer:divs,multi:true};
+  }
+  if(type===3){
+    var sub=rng(0,1), n=rng(12,MAX_N), divs=getDivisors(n);
+    if(sub===0){
+      var wrongs=shuffle(divs.slice(1,-1)).slice(0,4);
+      return {type:3,badge:'Тип 3 — найбільший дільник',q:'Вкажіть найбільший дільник числа',n:n,options:shuffle([n].concat(wrongs)),answer:[n],multi:false};
+    } else {
+      var wrongs=shuffle(divs.slice(1)).slice(0,4);
+      return {type:3,badge:'Тип 3 — найменший дільник',q:'Вкажіть найменший дільник числа',n:n,options:shuffle([1].concat(wrongs)),answer:[1],multi:false};
+    }
+  }
+  if(type===4){
+    var n=rng(3,15), correct=n*rng(2,8);
+    var wrongs=[];
+    while(wrongs.length<5){ var c=rng(n+1,n*12); if(c%n!==0&&wrongs.indexOf(c)===-1) wrongs.push(c); }
+    return {type:4,badge:'Тип 4 — кратне числа',q:'Яке з поданих чисел є кратним числа',n:n,options:shuffle([correct].concat(wrongs.slice(0,5))),answer:[correct],multi:false};
+  }
+  if(type===5){
+    var n=rng(3,15), count=rng(2,3), correct=[];
+    for(var i=1;i<=count;i++) correct.push(n*i);
+    return {type:5,badge:'Тип 5 — '+count+' найменших кратних',q:'Введіть '+count+' найменших кратних числа',n:n,answer:correct,inputCount:count};
+  }
+  var n=rng(3,MAX_N);
+  return {type:6,badge:'Тип 6 — найменше кратне',q:'Введіть найменше натуральне кратне числа',n:n,answer:[n],inputCount:1,hint:'Найменше кратне числа — це саме число'};
+}
+
+function showNext(){
+  qNum++;
+  currentQ=makeQ();
+  updateUI();
+  var area=document.getElementById('quiz-area');
+  if(currentQ.inputCount){ renderInput(area); }
+  else if(currentQ.multi){ renderMulti(area); }
+  else { renderSingle(area); }
+}
+
+function renderSingle(area){
+  var q=currentQ;
+  area.innerHTML='<div class="quiz-card">'+
+    '<span class="quiz-type-badge">'+q.badge+'</span>'+
+    '<div class="quiz-question">'+q.q+'</div>'+
+    '<div class="quiz-number-display">'+q.n+'</div>'+
+    '<div class="options-grid" id="opts"></div>'+
+    '<div class="feedback" id="fb"></div>'+
+    '<div class="nav-row"><button class="btn-nav primary" id="btn-next" onclick="showNext()" disabled>Далі →</button></div>'+
+  '</div>';
+  var grid=document.getElementById('opts');
+  q.options.forEach(function(val){
+    var btn=document.createElement('button');
+    btn.className='option-btn';
+    btn.textContent=val;
+    btn.onclick=function(){ checkSingle(val,q.answer[0],btn); };
+    grid.appendChild(btn);
+  });
+}
+
+function checkSingle(val,correct,btn){
+  var nb=document.getElementById('btn-next');
+  if(!nb.disabled) return;
+  document.querySelectorAll('.option-btn').forEach(function(b){
+    b.disabled=true;
+    if(parseInt(b.textContent)===correct) b.classList.add('correct');
+  });
+  var fb=document.getElementById('fb');
+  if(val===correct){ btn.classList.add('correct'); fb.className='feedback show ok'; fb.textContent='✅ Правильно!'; scoreRight++; }
+  else { btn.classList.add('wrong'); fb.className='feedback show err'; fb.textContent='❌ Неправильно. Правильна відповідь: '+correct; scoreWrong++; }
+  nb.disabled=false;
+  updateUI();
+}
+
+function renderMulti(area){
+  var q=currentQ;
+  area.innerHTML='<div class="quiz-card">'+
+    '<span class="quiz-type-badge">'+q.badge+'</span>'+
+    '<div class="quiz-question">'+q.q+'</div>'+
+    '<div class="quiz-number-display">'+q.n+'</div>'+
+    '<div class="hint-text">Можна вибрати кілька варіантів</div>'+
+    '<div class="multi-check-group" id="cbs"></div>'+
+    '<div class="feedback" id="fb"></div>'+
+    '<div class="nav-row">'+
+      '<button class="btn-nav secondary" id="btn-check" onclick="checkMulti()">Перевірити</button>'+
+      '<button class="btn-nav primary" id="btn-next" onclick="showNext()" disabled>Далі →</button>'+
+    '</div>'+
+  '</div>';
+  var cbs=document.getElementById('cbs');
+  q.options.forEach(function(val){
+    var lbl=document.createElement('label');
+    lbl.className='cb-label'; lbl.dataset.val=val;
+    lbl.innerHTML='<input type="checkbox" value="'+val+'"><span>'+val+'</span>';
+    lbl.querySelector('input').addEventListener('change',function(){ lbl.classList.toggle('checked',this.checked); });
+    cbs.appendChild(lbl);
+  });
+}
+
+function checkMulti(){
+  var q=currentQ;
+  var labels=document.querySelectorAll('.cb-label');
+  var selected=[];
+  labels.forEach(function(l){ if(l.querySelector('input').checked) selected.push(parseInt(l.dataset.val)); l.querySelector('input').disabled=true; });
+  var correct=q.answer;
+  var allOk=selected.length===correct.length&&selected.every(function(v){ return correct.indexOf(v)!==-1; });
+  labels.forEach(function(l){
+    var v=parseInt(l.dataset.val);
+    var isc=correct.indexOf(v)!==-1, iss=selected.indexOf(v)!==-1;
+    if(isc&&iss) l.classList.add('correct');
+    else if(!isc&&iss) l.classList.add('wrong');
+    else if(isc&&!iss) l.classList.add('missed');
+  });
+  var fb=document.getElementById('fb');
+  if(allOk){ fb.className='feedback show ok'; fb.textContent='✅ Правильно! Усі дільники знайдено!'; scoreRight++; }
+  else { fb.className='feedback show err'; fb.textContent='❌ Не зовсім. Правильні дільники: '+correct.join(', '); scoreWrong++; }
+  document.getElementById('btn-check').disabled=true;
+  document.getElementById('btn-next').disabled=false;
+  updateUI();
+}
+
+function renderInput(area){
+  var q=currentQ, inputs='';
+  for(var i=0;i<q.inputCount;i++) inputs+='<input type="number" class="input-number" id="inp'+i+'" placeholder="'+(i+1)+'-е число" min="1" style="max-width:140px">';
+  area.innerHTML='<div class="quiz-card">'+
+    '<span class="quiz-type-badge">'+q.badge+'</span>'+
+    '<div class="quiz-question">'+q.q+'</div>'+
+    '<div class="quiz-number-display">'+q.n+'</div>'+
+    (q.hint?'<div class="hint-text">'+q.hint+'</div>':'')+
+    '<div class="input-row">'+inputs+'</div>'+
+    '<div class="feedback" id="fb"></div>'+
+    '<div class="nav-row">'+
+      '<button class="btn-nav secondary" id="btn-check" onclick="checkInput()">Перевірити</button>'+
+      '<button class="btn-nav primary" id="btn-next" onclick="showNext()" disabled>Далі →</button>'+
+    '</div>'+
+  '</div>';
+  var el=document.getElementById('inp0');
+  if(el) el.addEventListener('keydown',function(e){ if(e.key==='Enter') checkInput(); });
+}
+
+function checkInput(){
+  var q=currentQ, vals=[];
+  for(var i=0;i<q.inputCount;i++){
+    var el=document.getElementById('inp'+i);
+    var v=parseInt(el.value);
+    vals.push(isNaN(v)?null:v);
+    el.disabled=true;
+  }
+  var correct=q.answer;
+  var ok=vals.length===correct.length&&vals.every(function(v,i){ return v===correct[i]; });
+  var fb=document.getElementById('fb');
+  if(ok){ fb.className='feedback show ok'; fb.textContent='✅ Правильно! '+correct.join(', '); scoreRight++; }
+  else { fb.className='feedback show err'; fb.textContent='❌ Неправильно. Правильна відповідь: '+correct.join(', '); scoreWrong++; }
+  document.getElementById('btn-check').disabled=true;
+  document.getElementById('btn-next').disabled=false;
+  updateUI();
+}
+
+showNext();
+</script>
 </body>
 </html>
