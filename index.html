@@ -1,0 +1,244 @@
+<script>
+const rng = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+function getDivisors(n) {
+  const d = [];
+  for (let i = 1; i <= n; i++) if (n % i === 0) d.push(i);
+  return d;
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+const MAX_N = 70;
+const TOTAL_QUESTIONS = 10;
+
+function generateOneQuestion() {
+  const type = rng(1, 6);
+  return makeQuestion(type);
+}
+
+function makeQuestion(type) {
+
+  if (type === 1) {
+    const n = rng(12, MAX_N);
+    const divs = getDivisors(n);
+    const correct = divs[rng(1, divs.length - 2)];
+    const wrongs = [];
+    while (wrongs.length < 5) {
+      const c = rng(2, n - 1);
+      if (n % c !== 0 && !wrongs.includes(c)) wrongs.push(c);
+    }
+    return { type: 1, badge: 'Тип 1 — один дільник', q: `Яке число є дільником`, n, options: shuffle([correct, ...wrongs]), answer: [correct], multi: false };
+  }
+
+  if (type === 2) {
+    const n = rng(12, 40);
+    const divs = getDivisors(n);
+    const wrongs = [];
+    while (wrongs.length < 4) {
+      const c = rng(2, n + 10);
+      if (n % c !== 0 && !wrongs.includes(c)) wrongs.push(c);
+    }
+    return { type: 2, badge: 'Тип 2 — усі дільники', q: `Познач всі дільники`, n, options: shuffle([...divs, ...wrongs]), answer: divs, multi: true };
+  }
+
+  if (type === 3) {
+    const n = rng(12, MAX_N);
+    const sub = rng(0,1);
+
+    if (sub === 0) {
+      return { type: 3, badge: 'Найбільший дільник', q: `Вкажи найбільший дільник`, n, options: shuffle([n, ...shuffle(getDivisors(n)).slice(0,4)]), answer: [n] };
+    } else {
+      return { type: 3, badge: 'Найменший дільник', q: `Вкажи найменший дільник`, n, options: shuffle([1, ...shuffle(getDivisors(n)).slice(0,4)]), answer: [1] };
+    }
+  }
+
+  if (type === 4) {
+    const n = rng(3, 15);
+    const correct = n * rng(2, 8);
+    const wrongs = [];
+    while (wrongs.length < 5) {
+      const c = rng(n + 1, n * 10);
+      if (c % n !== 0 && !wrongs.includes(c)) wrongs.push(c);
+    }
+    return { type: 4, badge: 'Кратне числа', q: `Яке число кратне`, n, options: shuffle([correct, ...wrongs]), answer: [correct] };
+  }
+
+  if (type === 5) {
+    const n = rng(3, 15);
+    const correct = [n, n*2, n*3];
+    return { type: 5, badge: 'Кратні (введення)', q: `Введи 3 найменших кратних`, n, answer: correct, inputCount: 3 };
+  }
+
+  return { type: 6, badge: 'Найменше кратне', q: `Введи найменше кратне`, n: rng(3, MAX_N), answer: function(n){return [n]}, inputCount: 1 };
+}
+
+let current = 0;
+let scoreRight = 0;
+let scoreWrong = 0;
+let currentQuestion = null;
+
+function updateScoreUI() {
+  document.getElementById('q-num').textContent = current;
+  document.getElementById('score-right').textContent = scoreRight;
+  document.getElementById('score-wrong').textContent = scoreWrong;
+}
+
+function renderSingleQuestion(q, area) {
+  area.innerHTML = `
+    <div class="quiz-card">
+      <span class="quiz-type-badge">${q.badge}</span>
+      <div class="quiz-question">${q.q}</div>
+      <div class="quiz-number-display">${q.n}</div>
+      <div class="options-grid" id="opts"></div>
+      <div class="feedback" id="fb"></div>
+      <button class="btn-nav primary" id="btn-next" disabled>Далі</button>
+    </div>`;
+
+  const grid = document.getElementById('opts');
+
+  q.options.forEach(val => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.textContent = val;
+    btn.onclick = () => {
+      const correct = q.answer[0];
+      document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+
+      const fb = document.getElementById('fb');
+      fb.classList.add('show');
+
+      if (val === correct) {
+        btn.classList.add('correct');
+        fb.textContent = '✅ Правильно!';
+        scoreRight++;
+      } else {
+        btn.classList.add('wrong');
+        fb.textContent = '❌ Неправильно: ' + correct;
+        scoreWrong++;
+      }
+
+      document.getElementById('btn-next').disabled = false;
+      updateScoreUI();
+    };
+    grid.appendChild(btn);
+  });
+
+  document.getElementById('btn-next').onclick = nextQ;
+}
+
+function renderMultiQuestion(q, area) {
+  area.innerHTML = `
+    <div class="quiz-card">
+      <span class="quiz-type-badge">${q.badge}</span>
+      <div class="quiz-question">${q.q}</div>
+      <div class="quiz-number-display">${q.n}</div>
+      <div id="cbs"></div>
+      <button onclick="checkMulti()">Перевірити</button>
+      <div id="fb"></div>
+      <button id="btn-next" disabled>Далі</button>
+    </div>`;
+
+  const cbs = document.getElementById('cbs');
+
+  q.options.forEach(val => {
+    const label = document.createElement('label');
+    label.innerHTML = `<input type="checkbox" value="${val}">${val}`;
+    cbs.appendChild(label);
+  });
+
+  document.getElementById('btn-next').onclick = nextQ;
+}
+
+function checkMulti() {
+  const q = currentQuestion;
+  const checked = [...document.querySelectorAll('input:checked')].map(e => +e.value);
+  const correct = q.answer;
+
+  const ok = correct.every(v => checked.includes(v)) && checked.length === correct.length;
+
+  const fb = document.getElementById('fb');
+
+  if (ok) {
+    fb.textContent = '✅ Правильно!';
+    scoreRight++;
+  } else {
+    fb.textContent = '❌ ' + correct.join(', ');
+    scoreWrong++;
+  }
+
+  document.getElementById('btn-next').disabled = false;
+  updateScoreUI();
+}
+
+function renderInputQuestion(q, area) {
+  area.innerHTML = `
+    <div class="quiz-card">
+      <div>${q.q} ${q.n}</div>
+      <input id="inp">
+      <button onclick="checkInput()">OK</button>
+      <div id="fb"></div>
+      <button id="btn-next" disabled>Далі</button>
+    </div>`;
+
+  document.getElementById('btn-next').onclick = nextQ;
+}
+
+function checkInput() {
+  const val = +document.getElementById('inp').value;
+  const correct = currentQuestion.answer[0];
+
+  const fb = document.getElementById('fb');
+
+  if (val === correct) {
+    fb.textContent = '✅';
+    scoreRight++;
+  } else {
+    fb.textContent = '❌ ' + correct;
+    scoreWrong++;
+  }
+
+  document.getElementById('btn-next').disabled = false;
+  updateScoreUI();
+}
+
+function showResults() {
+  document.getElementById('quiz-area').innerHTML = `
+    <div class="result-screen">
+      <h2>Результат</h2>
+      <div>${scoreRight} / ${TOTAL_QUESTIONS}</div>
+      <button onclick="startQuiz()">Ще раз</button>
+    </div>`;
+}
+
+function nextQ() {
+  if (current >= TOTAL_QUESTIONS) return showResults();
+
+  current++;
+  currentQuestion = generateOneQuestion();
+
+  const area = document.getElementById('quiz-area');
+
+  if (currentQuestion.multi) renderMultiQuestion(currentQuestion, area);
+  else if (currentQuestion.inputCount) renderInputQuestion(currentQuestion, area);
+  else renderSingleQuestion(currentQuestion, area);
+
+  updateScoreUI();
+}
+
+function startQuiz() {
+  current = 0;
+  scoreRight = 0;
+  scoreWrong = 0;
+  nextQ();
+}
+
+startQuiz();
+</script>
