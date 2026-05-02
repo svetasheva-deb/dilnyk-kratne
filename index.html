@@ -1,129 +1,92 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Дільники і кратні</title>
-
-<style>
-body { font-family: Arial; padding: 20px; }
-.quiz-card { padding: 15px; border: 1px solid #ccc; margin-top: 10px; }
-.option-btn { margin: 5px; padding: 8px; cursor: pointer; }
-.correct { background: #4caf50; color: white; }
-.wrong { background: #f44336; color: white; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Application</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .input-field { margin: 10px 0; }
+        input[type="text"], input[type="number"], input[type="email"] {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        input[type="checkbox"] { margin-right: 10px; }
+    </style>
 </head>
-
 <body>
+    <h1>Quiz Application</h1>
+    <form id="quizForm">
+        <div class="input-field">
+            <label for="questionType">Select Question Type:</label>
+            <select id="questionType" name="questionType">
+                <option value="1">Type 1</option>
+                <option value="2">Type 2</option>
+                <option value="3">Type 3</option>
+                <option value="4">Type 4</option>
+                <option value="5">Type 5</option>
+                <option value="6">Type 6</option>
+            </select>
+        </div>
+        <div class="input-field" id="questionArea"></div>
+        <button type="submit">Submit</button>
+    </form>
+    <script>
+        document.getElementById('questionType').addEventListener('change', function() {
+            const questionArea = document.getElementById('questionArea');
+            questionArea.innerHTML = ''; // Clear previous question input
+            const type = this.value;
 
-<h2>Квіз: дільники і кратні</h2>
+            let inputField;
+            switch(type) {
+                case '1':
+                    inputField = document.createElement('input');
+                    inputField.type = 'text';
+                    inputField.placeholder = 'Type 1 Question';
+                    break;
+                case '2':
+                    inputField = document.createElement('input');
+                    inputField.type = 'number';
+                    inputField.placeholder = 'Type 2 Question';
+                    break;
+                case '3': // Fixed syntax error
+                    inputField = document.createElement('input');
+                    inputField.type = 'text';
+                    inputField.placeholder = 'Type 3 Question';
+                    break;
+                case '4':
+                    inputField = document.createElement('input');
+                    inputField.type = 'email';
+                    inputField.placeholder = 'Type 4 Question';
+                    break;
+                case '5':
+                    inputField = document.createElement('input');
+                    inputField.type = 'text';
+                    inputField.placeholder = 'Type 5 Question';
+                    inputField.required = true; // Proper input handling
+                    break;
+                case '6':
+                    inputField = document.createElement('input');
+                    inputField.type = 'text';
+                    inputField.placeholder = 'Type 6 Question';
+                    inputField.required = true; // Proper input handling
+                    break;
+                default:
+                    break;
+            }
+            if (inputField) {
+                inputField.classList.add('input-field');
+                questionArea.appendChild(inputField);
+            }
+        });
 
-<div>Питання: <span id="q-num">0</span></div>
-<div>✔ Правильні: <span id="score-right">0</span></div>
-<div>✖ Неправильні: <span id="score-wrong">0</span></div>
-
-<div id="quiz-area"></div>
-
-<script>
-const rng = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
-
-function getDivisors(n) {
-  const d = [];
-  for (let i = 1; i <= n; i++) if (n % i === 0) d.push(i);
-  return d;
-}
-
-function shuffle(arr) {
-  return [...arr].sort(() => Math.random() - 0.5);
-}
-
-const MAX_N = 50;
-const TOTAL_QUESTIONS = 10;
-
-let current = 0;
-let scoreRight = 0;
-let scoreWrong = 0;
-let currentQuestion = null;
-
-function updateScoreUI() {
-  const qNum = document.getElementById('q-num');
-  const r = document.getElementById('score-right');
-  const w = document.getElementById('score-wrong');
-
-  if (!qNum || !r || !w) return;
-
-  qNum.textContent = current;
-  r.textContent = scoreRight;
-  w.textContent = scoreWrong;
-}
-
-function generate() {
-  const n = rng(5, MAX_N);
-  const divs = getDivisors(n);
-
-  const correct = divs[rng(0, divs.length - 1)];
-  const options = shuffle([...divs, rng(1, MAX_N), rng(1, MAX_N)]);
-
-  return { n, correct, options };
-}
-
-function render(q) {
-  const area = document.getElementById('quiz-area');
-
-  area.innerHTML = `
-    <div class="quiz-card">
-      <h3>Число: ${q.n}</h3>
-      <div id="opts"></div>
-      <div id="fb"></div>
-      <button onclick="next()">Далі</button>
-    </div>
-  `;
-
-  const opts = document.getElementById('opts');
-
-  q.options.forEach(v => {
-    const btn = document.createElement('button');
-    btn.textContent = v;
-    btn.className = 'option-btn';
-
-    btn.onclick = () => {
-      const fb = document.getElementById('fb');
-
-      document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
-
-      if (v === q.correct) {
-        btn.classList.add('correct');
-        fb.textContent = '✔ правильно';
-        scoreRight++;
-      } else {
-        btn.classList.add('wrong');
-        fb.textContent = '✖ правильно: ' + q.correct;
-        scoreWrong++;
-      }
-
-      updateScoreUI();
-    };
-
-    opts.appendChild(btn);
-  });
-}
-
-function next() {
-  if (current >= TOTAL_QUESTIONS) {
-    document.getElementById('quiz-area').innerHTML =
-      `<h2>Результат: ${scoreRight}/${TOTAL_QUESTIONS}</h2>`;
-    return;
-  }
-
-  current++;
-  currentQuestion = generate();
-  render(currentQuestion);
-  updateScoreUI();
-}
-
-window.addEventListener('DOMContentLoaded', () => {
-  next();
-});
-</script>
-
+        document.getElementById('quizForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('Form submitted successfully!');
+        });
+    </script>
 </body>
 </html>
