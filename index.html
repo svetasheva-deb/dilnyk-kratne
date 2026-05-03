@@ -67,7 +67,7 @@
 <div class="container">
   <header>
     <h1>🔢 Дільники та кратні</h1>
-    <p>Математичний тренажер — безлімітний режим</p>
+    <p>Математичний тренажер </p>
   </header>
   <div class="score-panel">
     <div class="score-chip">Запитання №<span id="q-num">0</span></div>
@@ -143,7 +143,7 @@ function makeQ(){
     return {type:5,badge:'Тип 5 — '+count+' найменших кратних',q:'Введіть '+count+' найменших кратних числа',n:n,answer:correct,inputCount:count};
   }
   var n=rng(3,MAX_N);
-  return {type:6,badge:'Тип 6 — найменше кратне',q:'Введіть найменше натуральне кратне числа',n:n,answer:[n],inputCount:1,hint:'Найменше кратне числа — це саме число'};
+  return {type:6,badge:'Тип 6 — найменше кратне',q:'Введіть найменше натуральне кратне числа',n:n,answer:[n],inputCount:1};
 }
 
 function showNext(){
